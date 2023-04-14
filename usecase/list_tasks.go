@@ -21,15 +21,19 @@ type ListTasksUsecaseOutput struct {
 
 // ListTasks は複数テーブルの値が必要になるタスク一覧を取得するユースケース
 func (u *ListTasksUsecase) ListTasks() (ListTasksUsecaseOutput, error) {
-	taskList, err := u.taskDataAccessor.List()
+	tasks, err := u.taskDataAccessor.List()
 	if err != nil {
 		return ListTasksUsecaseOutput{}, err
 	}
 
-	var taskListRows []*TaskListRow
+	var taskList []*TaskListRow
 	// 本当はIN句で取得してN+1問題を回避するが今回簡単のためループを回してます
-	for _, task := range taskList {
+	for _, task := range tasks {
 		var taskListRow TaskListRow
+
+		taskListRow.TaskID = string(task.TaskID)
+		taskListRow.TaskName = task.Name
+
 		if task.AssigneeID != "" {
 			assignee, err := u.userDataAccessor.Find(task.AssigneeID)
 			if err != nil {
@@ -45,9 +49,10 @@ func (u *ListTasksUsecase) ListTasks() (ListTasksUsecaseOutput, error) {
 			}
 			taskListRow.LabelName = label.Name
 		}
+		taskList = append(taskList, &taskListRow)
 	}
 
-	return ListTasksUsecaseOutput{TaskList: taskListRows}, nil
+	return ListTasksUsecaseOutput{TaskList: taskList}, nil
 }
 
 // ListTasksWithConditionAndPaging は複数テーブルをJoinして条件で絞り込んでページングするユースケース
