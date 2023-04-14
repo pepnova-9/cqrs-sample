@@ -8,20 +8,13 @@ import (
 type ListTasks struct {
 }
 
-type TaskListRowDataModel struct {
-	TaskID       string
-	TaskName     string
-	AssigneeName string
-	LabelName    string
-}
-
 func (l *ListTasks) Fetch(limit int, offset int) ([]readmodel.TaskListRow, error) {
 	_ = fmt.Sprintf(`
 	SELECT
-		tasks.id,
-		tasks.name,
-		users.name,
-		labels.name
+		tasks.id AS TaskID,
+		tasks.name AS TaskName
+		users.name AS AssigneeName,
+		labels.name AS LabelName
 	FROM
 		tasks
 	LEFT JOIN
@@ -40,18 +33,8 @@ func (l *ListTasks) Fetch(limit int, offset int) ([]readmodel.TaskListRow, error
 	LIMIT %d OFFSET %d  -- ページング条件
 `, limit, offset)
 
-	// SQLの結果がマッピングされたstructの配列
-	var queryResult []TaskListRowDataModel
-
+	// SQLの結果をstructにマッピングする
 	var taskList []readmodel.TaskListRow
-	for _, dataModel := range queryResult {
-		taskList = append(taskList, readmodel.TaskListRow{
-			TaskID:       dataModel.TaskID,
-			TaskName:     dataModel.TaskName,
-			AssigneeName: dataModel.AssigneeName,
-			LabelName:    dataModel.LabelName,
-		})
-	}
 
 	return taskList, nil
 }
